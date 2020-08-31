@@ -3,5 +3,5 @@ A auto sign app for qq three kingdom
 
 ## Get Started
 
-1. Download the [binary file]()
+1. Download the [binary file](AutoSignInvoker.exe)
 2. Run AutoInvoker.exe on your computer.
