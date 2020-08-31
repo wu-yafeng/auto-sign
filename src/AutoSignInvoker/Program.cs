@@ -27,6 +27,27 @@ namespace AutoSignInvoker
         private static HttpClient _client;
         static async Task Main(string[] args)
         {
+            Console.WriteLine("Application Has Started!");
+            var random = new Random();
+                
+            while (true)
+            {
+                Console.WriteLine("Started Sign In!");
+                await Run();
+                Console.WriteLine("Completed Sign In!");
+                // every day 6:00:00~10:59:59
+
+                await Task.Delay((DateTime.Today.AddDays(1) - DateTime.Now)
+                    .Add(TimeSpan.FromHours(6))
+                    .Add(TimeSpan.FromHours(random.Next(4))
+                    .Add(TimeSpan.FromMinutes(random.Next(59)))
+                    .Add(TimeSpan.FromSeconds(random.Next(59)))));
+            }
+        }
+
+
+        private static async Task Run()
+        {
             var browser = new ChromeDriver();
             var waiter = new WebDriverWait(browser, TimeSpan.FromSeconds(10));
 
@@ -41,7 +62,7 @@ namespace AutoSignInvoker
             browser.Url = url;
 
             // wait redirection completed and page fully rendered
-            var loginFrame = waiter.Until(driver => driver.FindElement(By.Id("loginFrame")));
+            var loginFrame = TryWait(waiter, driver => driver.FindElement(By.Id("loginFrame")));
 
             // rqeuired sign in
             if (loginFrame != null)
@@ -66,7 +87,7 @@ namespace AutoSignInvoker
                 loginButton.Click();
 
                 // wait 2s for rendering verification code
-                var verificationCode = waiter.Until(driver => driver.FindElement(By.Id("tcaptcha_iframe")));
+                var verificationCode = TryWait(waiter, driver => driver.FindElement(By.Id("tcaptcha_iframe")));
                 if (verificationCode != null)
                 {
                     browser.SwitchTo().Frame("tcaptcha_iframe");
@@ -87,10 +108,15 @@ namespace AutoSignInvoker
                 }
             }
 
+            // switch to top
+            browser.SwitchTo().DefaultContent();
 
-            Console.WriteLine("Hello World!");
+            var signInBtn = TryWait(waiter, driver => driver.FindElement(By.XPath("/html/body/div[1]/div/div[2]/a")));
+
+            signInBtn.Click();
+
+            browser.Close();
         }
-
 
         private static void InteractExit(string error)
         {
@@ -111,7 +137,7 @@ namespace AutoSignInvoker
 
             var left = GetArgb(completeMap, pendingMap);
 
-            var leftShift = (int)(left * ((double)pendingImgWidth / (double)pendingImgWidth) - 18);
+            var leftShift = (int)(left * ((double)pendingImgWidth / (double)pendingMap.Width) - 38);
 
             var actions = new Actions(driver);
 
@@ -146,6 +172,18 @@ namespace AutoSignInvoker
             }
             // fallback
             return 0;
+        }
+
+        private static T TryWait<T>(WebDriverWait waiter, Func<IWebDriver, T> until)
+        {
+            try
+            {
+                return waiter.Until(until);
+            }
+            catch (Exception)
+            {
+                return default(T);
+            }
         }
     }
 }
